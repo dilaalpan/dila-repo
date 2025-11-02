@@ -48,11 +48,13 @@ export default function Home() {
     e.preventDefault();
     if (!newTaskTitle.trim()) return;
 
+    const finalPriority = newPriority;
+
     try {
       const res = await fetch("/api/tasks", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title: newTaskTitle, priority: newPriority }),
+        body: JSON.stringify({ title: newTaskTitle, priority: finalPriority }),
       });
 
       if (!res.ok) {
@@ -63,7 +65,7 @@ export default function Home() {
       }
 
       setNewTaskTitle("");
-      setNewPriority(3);
+      setNewPriority(1);
       fetchTasks();
     } catch (err: unknown) {
       if (err instanceof Error) alert(`Error: ${err.message}`);
@@ -119,7 +121,6 @@ export default function Home() {
       <h1>Cloud-Based To-Do List</h1>
 
       <form onSubmit={handleAddTask} className="task-form">
-        {/* i had troubles here */}
         <div className="select-wrapper">
           <select
             value={Math.max(1, Math.min(3, newPriority))}
@@ -162,16 +163,14 @@ export default function Home() {
 
             <span className="task-content">
               <span className="task-title">{task.title}</span>
+
               <span
                 className={`priority-tag ${
-                  // i have tried to do this part with so many times but even if the use pick P1 or P2 it is still reflected as if user picked P3
                   PRIORITY_LABELS[task.priority]?.color ||
                   PRIORITY_LABELS[3].color
                 }`}
               >
-                {/* if the user doesnt pick specifically it is automatically low priority but right now everythign is considered as low priority eventhoug the user picks P1 or P2 */}
-                {PRIORITY_LABELS[task.priority]?.label.split(" ")[0] ||
-                  PRIORITY_LABELS[3].label.split(" ")[0]}
+                {`P${task.priority}`}
               </span>
             </span>
 

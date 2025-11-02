@@ -5,9 +5,11 @@ import { supabase } from '@/lib/supabase';
 export async function GET() {
  
   const { data: tasks, error } = await supabase
-    .from('tasks')
-    .select('*')
-    .order('created_at', { ascending: false }); 
+  .from('tasks')
+  .select('*')
+  .order('priority', { ascending: true })  
+  .order('created_at', { ascending: false }); 
+
   if (error) {
     console.error('Veri çekme hatası:', error);
   
@@ -19,26 +21,34 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  const { title } = await request.json();
+  const { title, priority } = await request.json(); 
 
   if (!title) {
-    
-    return new Response(JSON.stringify({ error: 'Başlık alanı zorunludur' }), { status: 400 });
+    return new Response(
+      JSON.stringify({ error: 'Başlık alanı zorunludur' }),
+      { status: 400 }
+    );
   }
 
   const { data: newTask, error } = await supabase
     .from('tasks')
-    .insert([{ title, is_complete: false }])
+    .insert([
+      {
+        title,
+        priority: priority ?? 3, 
+        is_complete: false,
+      },
+    ])
     .select()
     .single();
 
   if (error) {
     console.error('Görev ekleme hatası:', error);
-    
-    return new Response(JSON.stringify({ error: 'Veritabanı hatası' }), { status: 500 });
+    return new Response(JSON.stringify({ error: 'Veritabanı hatası' }), {
+      status: 500,
+    });
   }
 
-  
   return new Response(JSON.stringify(newTask), { status: 201 });
 }
 
