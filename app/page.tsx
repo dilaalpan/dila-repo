@@ -7,12 +7,20 @@ interface Task {
   id: string;
   title: string;
   is_complete: boolean;
+  priority: number;
   created_at: string;
 }
+
+const PRIORITY_LABELS: { [key: number]: { label: string; color: string } } = {
+  1: { label: "P1 - High", color: "priority-high" },
+  2: { label: "P2 - Medium", color: "priority-medium" },
+  3: { label: "P3 - Low", color: "priority-low" },
+};
 
 export default function Home() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [newTaskTitle, setNewTaskTitle] = useState("");
+  const [newPriority, setNewPriority] = useState<number>(3);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -20,9 +28,7 @@ export default function Home() {
     setLoading(true);
     try {
       const res = await fetch("/api/tasks");
-      if (!res.ok) {
-        throw new Error(`API Error: ${res.status}`);
-      }
+      if (!res.ok) throw new Error(`API Error: ${res.status}`);
       const data: Task[] = await res.json();
       setTasks(data);
       setError(null);
@@ -45,10 +51,8 @@ export default function Home() {
     try {
       const res = await fetch("/api/tasks", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ title: newTaskTitle }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title: newTaskTitle, priority: newPriority }),
       });
 
       if (!res.ok) {
@@ -59,13 +63,11 @@ export default function Home() {
       }
 
       setNewTaskTitle("");
+      setNewPriority(3);
       fetchTasks();
     } catch (err: unknown) {
-      if (err instanceof Error) {
-        alert(`Error: ${err.message}`);
-      } else {
-        alert("An unexpected error occurred.");
-      }
+      if (err instanceof Error) alert(`Error: ${err.message}`);
+      else alert("An unexpected error occurred.");
     }
   };
 
@@ -73,16 +75,11 @@ export default function Home() {
     try {
       const res = await fetch("/api/tasks", {
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id: task.id, is_complete: !task.is_complete }),
       });
-
-      if (!res.ok) {
+      if (!res.ok)
         throw new Error("An error occurred while updating the task status.");
-      }
-
       fetchTasks();
     } catch (err: unknown) {
       alert("Update failed.");
@@ -91,115 +88,109 @@ export default function Home() {
 
   const handleDeleteTask = async (id: string) => {
     if (!confirm("Are you sure you want to delete this task?")) return;
-
     try {
       const res = await fetch("/api/tasks", {
         method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id }),
       });
-
-      if (!res.ok) {
+      if (!res.ok)
         throw new Error("An error occurred while deleting the task.");
-      }
-
       fetchTasks();
     } catch (err: unknown) {
       alert("Deletion failed.");
     }
   };
 
-  const styles = {
-    container: "max-w-xl mx-auto p-4 bg-gray-50 shadow-lg rounded-lg mt-10",
-    header: "text-3xl font-bold text-center text-indigo-700 mb-6",
-    form: "flex mb-6",
-    input:
-      "flex-grow p-3 border border-gray-300 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-indigo-500",
-    button:
-      "px-6 py-3 bg-indigo-600 text-white font-semibold rounded-r-lg hover:bg-indigo-700 transition duration-150",
-    list: "space-y-3",
-    listItem: (isComplete: boolean) =>
-      `flex items-center justify-between p-3 border border-gray-200 rounded-lg transition duration-150 ${
-        isComplete ? "bg-green-100" : "bg-white"
-      }`,
-    title: (isComplete: boolean) =>
-      `text-lg ${isComplete ? "line-through text-gray-500" : "text-gray-800"}`,
-    actionButton:
-      "text-gray-400 hover:text-indigo-600 ml-3 transition duration-150",
-  };
+  const priorityClasses = (isComplete: boolean) =>
+    isComplete ? "task-complete" : "task-pending";
 
   if (loading && tasks.length === 0)
-    return <div className={styles.container}>Loading...</div>;
+    return <div className="container">Loading...</div>;
   if (error)
     return (
-      <div className={styles.container} style={{ color: "red" }}>
+      <div className="container" style={{ color: "red" }}>
         Error: {error}
       </div>
     );
 
   return (
-    <div className={styles.container}>
-      <h1 className={styles.header}>Cloud-Based To-Do List</h1>
+    <div className="container">
+      <h1>Cloud-Based To-Do List</h1>
 
-      <form onSubmit={handleAddTask} className={styles.form}>
+      <form onSubmit={handleAddTask} className="task-form">
+        {/* Priority Select */}
+        <div className="select-wrapper">
+          <select
+            value={Math.max(1, Math.min(3, newPriority))}
+            onChange={(e) => setNewPriority(parseInt(e.target.value))}
+          >
+            <option value={1}>P1 - High</option>
+            <option value={2}>P2 - Medium</option>
+            <option value={3}>P3 - Low</option>
+          </select>
+        </div>
+
+        {/* Input Alanı */}
         <input
           type="text"
           value={newTaskTitle}
           onChange={(e) => setNewTaskTitle(e.target.value)}
           placeholder="New task title..."
-          className={styles.input}
+          className="task-input"
         />
-        <button type="submit" className={styles.button}>
-          Add
-        </button>
+
+        <button type="submit">Add Task</button>
       </form>
 
-      <div className={styles.list}>
+      <div className="task-list">
         {tasks.map((task) => (
-          <div key={task.id} className={styles.listItem(task.is_complete)}>
+          <div
+            key={task.id}
+            className={`task-item ${priorityClasses(task.is_complete)}`}
+          >
             <button
               onClick={() => handleToggleComplete(task)}
-              className={styles.actionButton}
+              className="toggle-btn"
               title="Toggle status"
             >
               {task.is_complete ? (
-                <BsCheckCircleFill size={20} className="text-green-500" />
+                <BsCheckCircleFill size={24} color="#10b981" />
               ) : (
-                <BsCircle size={20} />
+                <BsCircle size={24} color="#7597de" />
               )}
             </button>
 
-            <span
-              className={`flex-grow mx-3 ${styles.title(task.is_complete)}`}
-            >
-              {task.title}
+            <span className="task-content">
+              <span className="task-title">{task.title}</span>
+              <span
+                className={`priority-tag ${
+                  // task.priority değeri yoksa (null), varsayılan olarak P3'ün rengini kullanır.
+                  PRIORITY_LABELS[task.priority]?.color ||
+                  PRIORITY_LABELS[3].color
+                }`}
+              >
+                {/* task.priority değeri yoksa, varsayılan olarak P3 etiketini gösterir. */}
+                {PRIORITY_LABELS[task.priority]?.label.split(" ")[0] ||
+                  PRIORITY_LABELS[3].label.split(" ")[0]}
+              </span>
             </span>
 
             <button
               onClick={() => handleDeleteTask(task.id)}
-              className={styles.actionButton}
+              className="delete-btn"
               title="Delete task"
             >
-              <BsTrashFill size={18} className="hover:text-red-500" />
+              <BsTrashFill size={18} color="#ef4444" />
             </button>
           </div>
         ))}
       </div>
 
-      <p className="text-center mt-6 text-sm text-gray-500">
-        Total Tasks: {tasks.length}
-      </p>
-
-      <p className="text-center mt-2 text-xs text-gray-400">
-        API 5: Pending Tasks -
-        <a
-          href="http://localhost:3000/api/tasks/pending"
-          target="_blank"
-          className="text-indigo-400 hover:underline ml-1"
-        >
-          Test Endpoint
+      <p className="stats">
+        Total Tasks: {tasks.length} | API 5:{" "}
+        <a href="http://localhost:3000/api/tasks/pending" target="_blank">
+          Pending Test
         </a>
       </p>
     </div>

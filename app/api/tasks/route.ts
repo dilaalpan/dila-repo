@@ -1,4 +1,3 @@
-
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase'; 
 
@@ -76,7 +75,7 @@ export async function DELETE(request: Request) {
   const { id } = await request.json();
 
   if (!id) {
-    return new Response(JSON.stringify({ error: 'ID zorunludur' }), { status: 400 });
+    return new Response(JSON.stringify({ error: 'ID required' }), { status: 400 });
   }
 
   const { error } = await supabase
@@ -85,10 +84,10 @@ export async function DELETE(request: Request) {
     .eq('id', id); 
 
   if (error) {
-    console.error('Görev silme hatası:', error);
-    return new Response(JSON.stringify({ error: 'Veritabanı hatası' }), { status: 500 });
+    console.error('Task deletion mistake:', error);
+    return new Response(JSON.stringify({ error: 'Database mistake' }), { status: 500 });
   }
 
   
-  return new Response(JSON.stringify({ message: 'Görev başarıyla silindi' }), { status: 200 });
+  return new Response(JSON.stringify({ message: 'Task deleted succesfuly' }), { status: 200 });
 }
