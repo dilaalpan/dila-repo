@@ -119,7 +119,7 @@ export default function Home() {
       <h1>Cloud-Based To-Do List</h1>
 
       <form onSubmit={handleAddTask} className="task-form">
-        {/* Priority Select */}
+        {/* i had troubles here */}
         <div className="select-wrapper">
           <select
             value={Math.max(1, Math.min(3, newPriority))}
@@ -131,7 +131,6 @@ export default function Home() {
           </select>
         </div>
 
-        {/* Input Alanı */}
         <input
           type="text"
           value={newTaskTitle}
@@ -165,12 +164,12 @@ export default function Home() {
               <span className="task-title">{task.title}</span>
               <span
                 className={`priority-tag ${
-                  // task.priority değeri yoksa (null), varsayılan olarak P3'ün rengini kullanır.
+                  // i have tried to do this part with so many times but even if the use pick P1 or P2 it is still reflected as if user picked P3
                   PRIORITY_LABELS[task.priority]?.color ||
                   PRIORITY_LABELS[3].color
                 }`}
               >
-                {/* task.priority değeri yoksa, varsayılan olarak P3 etiketini gösterir. */}
+                {/* if the user doesnt pick specifically it is automatically low priority but right now everythign is considered as low priority eventhoug the user picks P1 or P2 */}
                 {PRIORITY_LABELS[task.priority]?.label.split(" ")[0] ||
                   PRIORITY_LABELS[3].label.split(" ")[0]}
               </span>
@@ -189,7 +188,7 @@ export default function Home() {
 
       <p className="stats">
         Total Tasks: {tasks.length} | API 5:{" "}
-        <a href="http://localhost:3000/api/tasks/pending" target="_blank">
+        <a href="/api/tasks/pending" target="_blank">
           Pending Test
         </a>
       </p>
